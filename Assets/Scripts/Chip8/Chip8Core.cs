@@ -2,6 +2,10 @@ using UnityEngine;
 
 public class Chip8Core : MonoBehaviour
 {
+    [SerializeField]
+    [Tooltip("Display Controller")]
+    private DisplayController displayController;
+
     // Memória de 4KB do CHIP-8
     public byte[] memory = new byte[4096];
 
@@ -20,6 +24,11 @@ public class Chip8Core : MonoBehaviour
     public bool isRunning = false;
     public float cycleDelay = 0.1f; // tempo entre ciclos
     private float timer = 0f;
+
+    void Awake()
+    {
+        displayController = FindObjectOfType<DisplayController>();
+    }
 
     void Start()
     {
@@ -106,7 +115,10 @@ public class Chip8Core : MonoBehaviour
                 if (opcode == 0x00E0)
                 {
                     Debug.Log("Executando 00E0 – Clear Screen");
-                    // DisplayController.ClearScreen(); ← a ser implementado
+                    if (displayController != null)
+                        displayController.ClearScreen();
+                    else
+                        Debug.LogWarning("DisplayController não está conectado.");
                 }
                 else if (opcode == 0x00EE)
                 {
