@@ -7,26 +7,25 @@ public class DisplayController : MonoBehaviour
 
     private const int width = 64;
     private const int height = 32;
+
     private GameObject[,] pixelGrid = new GameObject[width, height];
 
-    public float pixelSpacing = 0.1f; // Espaçamento opcional entre pixels
+    [Range(0f, 0.2f)]
+    public float pixelSpacing = 0.015f; // Espaço entre os pixels
 
     void Start()
     {
         GenerateDisplay();
-
-        // TESTE EDUCACIONAL APENAS PARA MOSTRAR O FUNCIONAMENTO DO SCRIPT
-        SetPixel(0, 0, true); // Acende pixel no canto superior esquerdo
-        SetPixel(10, 10, true); // Outro pixel aceso
-
+        ClearScreen();
     }
 
+    /// <summary>
+    /// Gera os 2048 pixels na tela usando pixelOffPrefab.
+    /// </summary>
     void GenerateDisplay()
     {
-        float pixelSize = 0.08f;   // tamanho do pixel
-        float pixelGap = 0.015f;   // espaço entre pixels
-
-        float spacing = pixelSize + pixelGap;
+        float pixelSize = 0.08f; // Tamanho dos pixels
+        float spacing = pixelSize + pixelSpacing;
 
         float totalWidth = spacing * width;
         float totalHeight = spacing * height;
@@ -51,27 +50,45 @@ public class DisplayController : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Define o estado de um pixel (aceso ou apagado).
+    /// </summary>
     public void SetPixel(int x, int y, bool state)
     {
         if (x < 0 || x >= width || y < 0 || y >= height) return;
+
+        // Salva posição antes de destruir
+        Vector3 pos = pixelGrid[x, y].transform.position;
 
         Destroy(pixelGrid[x, y]);
 
         GameObject newPixel = Instantiate(
             state ? pixelOnPrefab : pixelOffPrefab,
-            pixelGrid[x, y].transform.position,
+            pos,
             Quaternion.identity,
             this.transform
         );
 
+        newPixel.transform.localScale = Vector3.one * 0.08f;
         newPixel.name = $"Pixel_{x}_{y}";
         pixelGrid[x, y] = newPixel;
     }
 
+    /// <summary>
+    /// Apaga todos os pixels da tela.
+    /// </summary>
     public void ClearScreen()
     {
         for (int y = 0; y < height; y++)
             for (int x = 0; x < width; x++)
                 SetPixel(x, y, false);
+    }
+
+    /// <summary>
+    /// Método futuro para desenhar sprites na tela.
+    /// </summary>
+    public void DrawSprite(int x, int y, byte[] memory, ushort I, byte height)
+    {
+        // Ainda será implementado — corresponde ao opcode DXYN
     }
 }

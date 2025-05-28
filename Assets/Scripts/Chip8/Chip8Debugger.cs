@@ -3,9 +3,13 @@ using UnityEngine;
 public class Chip8Debugger : MonoBehaviour
 {
     public Chip8Core chip8;
+    [Tooltip("Habilita a opção de debug para rodar instruções manuais")]
+    public bool enableDebug = true;
 
     void Start()
     {
+        if (!enableDebug) return;
+
         chip8.ClearMemory();
 
         // Mini-ROM escrita diretamente na memória
