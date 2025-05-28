@@ -234,6 +234,37 @@ public class Chip8Core : MonoBehaviour
                         Debug.Log($"Executando 8XY3 – V[{x}] ^= V[{y}] → {V[x]}");
                         break;
 
+                    case 0x4:
+                        int sum = V[x] + V[y];
+                        V[0xF] = (byte)(sum > 255 ? 1 : 0);
+                        V[x] = (byte)(sum & 0xFF);
+                        Debug.Log($"Executando 8XY4 – V[{x}] += V[{y}], carry: {V[0xF]}");
+                        break;
+
+                    case 0x5:
+                        V[0xF] = (byte)(V[x] >= V[y] ? 1 : 0);
+                        V[x] = (byte)(V[x] - V[y]);
+                        Debug.Log($"Executando 8XY5 – V[{x}] -= V[{y}], borrow: {V[0xF]}");
+                        break;
+
+                    case 0x6:
+                        V[0xF] = (byte)(V[x] & 0x1);
+                        V[x] >>= 1;
+                        Debug.Log($"Executando 8XY6 – V[{x}] >>= 1, VF = {V[0xF]}");
+                        break;
+
+                    case 0x7:
+                        V[0xF] = (byte)(V[y] >= V[x] ? 1 : 0);
+                        V[x] = (byte)(V[y] - V[x]);
+                        Debug.Log($"Executando 8XY7 – V[{x}] = V[{y}] - V[{x}], VF = {V[0xF]}");
+                        break;
+
+                    case 0xE:
+                        V[0xF] = (byte)((V[x] & 0x80) >> 7);
+                        V[x] <<= 1;
+                        Debug.Log($"Executando 8XYE – V[{x}] <<= 1, VF = {V[0xF]}");
+                        break;   
+
                     default:
                         Debug.LogWarning($"Opcode 8XY? não implementado: {opcode:X4}");
                         break;
