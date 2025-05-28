@@ -16,17 +16,49 @@ public class Chip8Core : MonoBehaviour
     public ushort[] stack = new ushort[16];
     public byte SP = 0;
 
+    // Ciclo de execução contínua
+    public bool isRunning = false;
+    public float cycleDelay = 0.1f; // tempo entre ciclos
+    private float timer = 0f;
+
     void Start()
     {
         Debug.Log("CHIP-8 inicializado.");
         ClearMemory();
 
-        // Exemplo: carrega instrução 6XNN (V0 = 42)
-        memory[0x200] = 0x60; // 6X
-        memory[0x201] = 0x2A; // NN = 0x2A = 42
+        // Teste manual (opcional)
+            // memory[0x200] = 0x60;
+            // memory[0x201] = 0x2A;
+            // Cycle(); // Executa uma vez
 
-        Cycle(); // Executa uma vez
+        // Log dos primeiros 16 bytes da memória da ROM
+        for (int i = 0x200; i < 0x210; i++)
+        {
+            Debug.Log($"ROM[{i:X3}] = {memory[i]:X2}");
+        }
     }
+
+    void Update()
+    {
+        // 1. Verifica se a tecla de controle foi pressionada
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            isRunning = !isRunning;
+           Debug.Log($"Execução {(isRunning ? "Iniciada" : "Pausada")}");
+        }
+
+        // 2. Se não estiver rodando, sai da função
+        if (!isRunning) return;
+
+        // 3. Executa o ciclo com delay
+        timer += Time.deltaTime;
+        if (timer >= cycleDelay)
+        {
+            Cycle();
+            timer = 0f;
+        }
+    }
+
 
     public void ClearMemory()
     {
@@ -44,6 +76,8 @@ public class Chip8Core : MonoBehaviour
         ushort opcode = FetchOpcode();
         Debug.Log($"[Cycle] Opcode lido: {opcode:X4}");
         DecodeAndExecute(opcode);
+
+        Debug.Log($"[Cycle End] PC = {PC:X4}");
     }
 
     public ushort FetchOpcode()
