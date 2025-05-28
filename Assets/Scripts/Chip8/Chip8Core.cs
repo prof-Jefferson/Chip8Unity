@@ -60,19 +60,43 @@ public class Chip8Core : MonoBehaviour
             case 0x0000:
                 if (opcode == 0x00E0)
                 {
-                    Debug.Log("Executando 00E0 – Clear Screen (simulado)");
-                    // Aqui você chamaria DisplayController.ClearScreen();
+                    Debug.Log("Executando 00E0 – Clear Screen");
+                    // DisplayController.ClearScreen(); ← em breve
                 }
                 else if (opcode == 0x00EE)
                 {
+                    SP--;
+                    PC = stack[SP];
                     Debug.Log("Executando 00EE – Return from subroutine");
-                    // A ser implementado com stack
+                    return; // Não incrementar PC
                 }
                 break;
+
+            case 0x1000:
+                PC = nnn;
+                Debug.Log($"Executando 1NNN – Jump para {nnn:X3}");
+                return; // Não incrementar PC
+
+            case 0x2000:
+                stack[SP] = PC + 2;
+                SP++;
+                PC = nnn;
+                Debug.Log($"Executando 2NNN – Chamada de sub-rotina para {nnn:X3}");
+                return;
 
             case 0x6000:
                 V[x] = nn;
                 Debug.Log($"Executando 6XNN – V[{x}] = {nn}");
+                break;
+
+            case 0x7000:
+                V[x] += nn;
+                Debug.Log($"Executando 7XNN – V[{x}] += {nn}");
+                break;
+
+            case 0xA000:
+                I = nnn;
+                Debug.Log($"Executando ANNN – I = {nnn:X3}");
                 break;
 
             default:
