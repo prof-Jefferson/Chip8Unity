@@ -78,7 +78,7 @@ public class Chip8Core : MonoBehaviour
                 return; // Não incrementar PC
 
             case 0x2000:
-                stack[SP] = PC + 2;
+                stack[SP] = (ushort)(PC + 2); // Cast corrigido
                 SP++;
                 PC = nnn;
                 Debug.Log($"Executando 2NNN – Chamada de sub-rotina para {nnn:X3}");

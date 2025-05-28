@@ -6,20 +6,28 @@ public class Chip8Debugger : MonoBehaviour
 
     void Start()
     {
-        if (chip8 == null)
+        chip8.ClearMemory();
+
+        // Mini-ROM escrita diretamente na memória
+        chip8.memory[0x200] = 0x60; // V0 = 0x01
+        chip8.memory[0x201] = 0x01;
+
+        chip8.memory[0x202] = 0x61; // V1 = 0x05
+        chip8.memory[0x203] = 0x05;
+
+        chip8.memory[0x204] = 0x70; // V0 += 0x03
+        chip8.memory[0x205] = 0x03;
+
+        chip8.memory[0x206] = 0x12; // Jump para 0x202
+        chip8.memory[0x207] = 0x02;
+
+        // Rodar múltiplos ciclos
+        for (int i = 0; i < 5; i++)
         {
-            Debug.LogError("Chip8Core não atribuído ao debugger.");
-            return;
+            Debug.Log($"Ciclo {i + 1}");
+            chip8.Cycle();
         }
 
-        // Simula o carregamento de dados
-        chip8.memory[0x200] = 0x60;  // opcode parte 1
-        chip8.memory[0x201] = 0x0A;  // opcode parte 2 (6XNN = set VX)
-
-        chip8.V[0] = 42;
-        chip8.I = 0x300;
-
-        Debug.Log($"Teste: V0 = {chip8.V[0]}, I = {chip8.I}, PC = {chip8.PC:X}");
-        Debug.Log($"Memória @ 0x200 = {chip8.memory[0x200]:X2} {chip8.memory[0x201]:X2}");
+        Debug.Log($"Resultado final: V0 = {chip8.V[0]}, V1 = {chip8.V[1]}, PC = {(int)chip8.PC:X}");
     }
 }
