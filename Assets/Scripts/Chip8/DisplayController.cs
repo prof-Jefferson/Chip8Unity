@@ -85,10 +85,42 @@ public class DisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Método futuro para desenhar sprites na tela.
+    /// Método para desenhar sprites na tela.
     /// </summary>
-    public void DrawSprite(int x, int y, byte[] memory, ushort I, byte height)
+    public bool DrawSprite(byte startX, byte startY, byte[] memory, ushort startAddress, int numRows, byte[] V)
     {
-        // Ainda será implementado — corresponde ao opcode DXYN
+        bool collision = false;
+
+        for (int row = 0; row < numRows; row++)
+        {
+            byte spriteByte = memory[startAddress + row];
+
+            for (int col = 0; col < 8; col++)
+            {
+                int x = (startX + col) % 64;
+                int y = (startY + row) % 32;
+
+                bool spritePixel = (spriteByte & (0x80 >> col)) != 0;
+                GameObject pixel = pixelGrid[x, y];
+
+                bool currentPixelState = pixel.name.Contains("On");
+
+                if (spritePixel)
+                {
+                    if (currentPixelState)
+                    {
+                        collision = true;
+                        SetPixel(x, y, false);
+                    }
+                    else
+                    {
+                        SetPixel(x, y, true);
+                    }
+                }
+            }
+        }
+
+        return collision;
     }
+
 }

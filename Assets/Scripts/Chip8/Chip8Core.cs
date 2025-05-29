@@ -6,6 +6,10 @@ public class Chip8Core : MonoBehaviour
     [Tooltip("Display Controller")]
     private DisplayController displayController;
 
+    [SerializeField]
+    private Chip8Input inputHandler;
+
+
     // Memória de 4KB do CHIP-8
     public byte[] memory = new byte[4096];
 
@@ -14,6 +18,11 @@ public class Chip8Core : MonoBehaviour
 
     // Registrador de endereços e contador de programa
     public ushort I = 0;
+
+    // Registradores de temporização
+    public byte delayTimer = 0;
+    public byte soundTimer = 0;
+
     public ushort PC = 0x200; // Início do programa
 
     // Pilha e ponteiro da pilha
@@ -67,7 +76,6 @@ public class Chip8Core : MonoBehaviour
             timer = 0f;
         }
     }
-
 
     public void ClearMemory()
     {
@@ -270,6 +278,21 @@ public class Chip8Core : MonoBehaviour
                         break;
                 }
                 break;
+            
+            // ------------------------------
+            // 0x9XY0: Pula próxima se VX != VY
+            // ------------------------------
+            case 0x9000:
+                if (n == 0 && V[x] != V[y])
+                {
+                    Debug.Log($"Executando 9XY0 – V[{x}] != V[{y}] → pulando");
+                    PC += 2;
+                }
+                else
+                {
+                    Debug.Log($"Executando 9XY0 – V[{x}] == V[{y}] → continua");
+                }
+                break;
 
             // ------------------------------
             // 0xANNN: I = NNN
@@ -278,6 +301,162 @@ public class Chip8Core : MonoBehaviour
                 I = nnn;
                 Debug.Log($"Executando ANNN – I = {nnn:X3}");
                 break;
+
+            // ------------------------------
+
+            // BNNN: Jump para NNN + V0
+            // ------------------------------
+            case 0xB000:
+                PC = (ushort)(nnn + V[0]);
+                Debug.Log($"Executando BNNN – Jump para {nnn:X3} + V[0] ({V[0]}) = {PC:X3}");
+                return;
+
+            // ------------------------------
+            // 0xCXNN: VX = random() & NN
+            // ------------------------------
+            case 0xC000:
+                byte randomValue = (byte)Random.Range(0, 256);
+                V[x] = (byte)(randomValue & nn);
+                Debug.Log($"Executando CXNN – V[{x}] = rand({randomValue}) & {nn} = {V[x]}");
+                break;
+
+            // ------------------------------
+            // 0xDXYN: Desenha sprite em (VX, VY) com N bytes a partir de I
+            // ------------------------------
+            case 0xD000:
+                if (displayController != null)
+                {
+                    bool collision = displayController.DrawSprite(V[x], V[y], memory, I, n, V);
+                    V[0xF] = (byte)(collision ? 1 : 0);
+                    Debug.Log($"Executando DXYN – Desenha sprite em ({V[x]},{V[y]}), altura: {n}, colisão: {collision}");
+                }
+                else
+                {
+                    Debug.LogWarning("DisplayController não está conectado.");
+                }
+                break;
+
+            // ------------------------------
+            // 0xEX9E / 0xEXA1: Input de tecla
+            // ------------------------------
+            case 0xE000:
+                switch (nn)
+                {
+                    case 0x9E:
+                        if (inputHandler != null && inputHandler.IsKeyPressed(V[x]))
+                        {
+                            Debug.Log($"Executando EX9E – Tecla V[{x}] ({V[x]}) pressionada → pulando");
+                            PC += 2;
+                        }
+                        else
+                        {
+                            Debug.Log($"Executando EX9E – Tecla V[{x}] ({V[x]}) não pressionada");
+                        }
+                        break;
+
+                    case 0xA1:
+                        if (inputHandler != null && inputHandler.IsKeyReleased(V[x]))
+                        {
+                            Debug.Log($"Executando EXA1 – Tecla V[{x}] ({V[x]}) não pressionada → pulando");
+                            PC += 2;
+                        }
+                        else
+                        {
+                            Debug.Log($"Executando EXA1 – Tecla V[{x}] ({V[x]}) pressionada");
+                        }
+                        break;
+
+                    default:
+                        Debug.LogWarning($"Opcode E??? desconhecido: {opcode:X4}");
+                        break;
+                }
+                break;
+
+            // ------------------------------
+            // 0xFX**: Instruções diversas
+            // ------------------------------
+            case 0xF000:
+                switch (nn)
+                {
+                    case 0x0A:
+                        if (inputHandler != null)
+                        {
+                            int key = inputHandler.GetPressedKey();
+                            if (key != -1)
+                            {
+                                V[x] = (byte)key;
+                                Debug.Log($"Executando FX0A – Tecla {key} pressionada → V[{x}] = {key}");
+                            }
+                            else
+                            {
+                                // Não avança o PC, espera até uma tecla ser pressionada
+                                PC -= 2;
+                                Debug.Log("Executando FX0A – Aguardando tecla ser pressionada...");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning("inputHandler não está atribuído para FX0A");
+                        }
+                        break;
+
+                    case 0x07:
+                        V[x] = delayTimer;
+                        Debug.Log($"Executando FX07 – V[{x}] = delayTimer ({delayTimer})");
+                        break;
+
+                    case 0x15:
+                        delayTimer = V[x];
+                        Debug.Log($"Executando FX15 – delayTimer = V[{x}] ({V[x]})");
+                        break;
+
+                    case 0x18:
+                        soundTimer = V[x];
+                        Debug.Log($"Executando FX18 – soundTimer = V[{x}] ({V[x]})");
+                        break;
+
+                    case 0x1E:
+                        I += V[x];
+                        Debug.Log($"Executando FX1E – I += V[{x}] ({V[x]}), novo I = {I:X3}");
+                        break;
+
+                    case 0x29:
+                        // Fontes ficam geralmente no início da memória (5 bytes por caractere)
+                        I = (ushort)(V[x] * 5);
+                        Debug.Log($"Executando FX29 – I = endereço da fonte de V[{x}] = {V[x]} → I = {I:X3}");
+                        break;
+
+                    case 0x33:
+                        // Armazena o BCD de VX em I, I+1 e I+2
+                        byte value = V[x];
+                        memory[I] = (byte)(value / 100);
+                        memory[I + 1] = (byte)((value / 10) % 10);
+                        memory[I + 2] = (byte)(value % 10);
+                        Debug.Log($"Executando FX33 – BCD de V[{x}] = {value} → [{memory[I]},{memory[I+1]},{memory[I+2]}]");
+                        break;
+
+                    case 0x55:
+                        for (int i = 0; i <= x; i++)
+                        {
+                            memory[I + i] = V[i];
+                        }
+                        Debug.Log($"Executando FX55 – Armazenando V[0] até V[{x}] na memória a partir de I");
+                        break;
+
+                    case 0x65:
+                        for (int i = 0; i <= x; i++)
+                        {
+                            V[i] = memory[I + i];
+                        }
+                        Debug.Log($"Executando FX65 – Lendo memória para V[0] até V[{x}] a partir de I");
+                        break;
+
+                    default:
+                        Debug.LogWarning($"Opcode F??? desconhecido: {opcode:X4}");
+                        break;
+                }
+                break;
+
 
             // ------------------------------
             // Opcode desconhecido
