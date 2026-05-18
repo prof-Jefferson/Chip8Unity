@@ -9,9 +9,10 @@ public class DisplayController : MonoBehaviour
     private const int height = 32;
 
     private GameObject[,] pixelGrid = new GameObject[width, height];
+    private bool[,] pixelStates = new bool[width, height];
 
     [Range(0f, 0.2f)]
-    public float pixelSpacing = 0.015f; // Espaço entre os pixels
+    public float pixelSpacing = 0.015f; // Espaco entre os pixels
 
     void Start()
     {
@@ -57,7 +58,7 @@ public class DisplayController : MonoBehaviour
     {
         if (x < 0 || x >= width || y < 0 || y >= height) return;
 
-        // Salva posição antes de destruir
+        // Salva posicao antes de destruir
         Vector3 pos = pixelGrid[x, y].transform.position;
 
         Destroy(pixelGrid[x, y]);
@@ -72,6 +73,7 @@ public class DisplayController : MonoBehaviour
         newPixel.transform.localScale = Vector3.one * 0.08f;
         newPixel.name = $"Pixel_{x}_{y}";
         pixelGrid[x, y] = newPixel;
+        pixelStates[x, y] = state;
     }
 
     /// <summary>
@@ -85,7 +87,7 @@ public class DisplayController : MonoBehaviour
     }
 
     /// <summary>
-    /// Método para desenhar sprites na tela.
+    /// Metodo para desenhar sprites na tela.
     /// </summary>
     public bool DrawSprite(byte startX, byte startY, byte[] memory, ushort startAddress, int numRows, byte[] V)
     {
@@ -101,9 +103,7 @@ public class DisplayController : MonoBehaviour
                 int y = (startY + row) % 32;
 
                 bool spritePixel = (spriteByte & (0x80 >> col)) != 0;
-                GameObject pixel = pixelGrid[x, y];
-
-                bool currentPixelState = pixel.name.Contains("On");
+                bool currentPixelState = pixelStates[x, y];
 
                 if (spritePixel)
                 {

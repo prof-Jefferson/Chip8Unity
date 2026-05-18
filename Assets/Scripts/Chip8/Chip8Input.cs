@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Chip8Input : MonoBehaviour
 {
-    // Mapeamento das teclas físicas para as teclas do CHIP-8
+    // Mapeamento das teclas fisicas para as teclas do CHIP-8
     public KeyCode[] KeyMap = new KeyCode[16]
     {
         KeyCode.X,      // 0
@@ -33,7 +33,7 @@ public class Chip8Input : MonoBehaviour
         return false;
     }
 
-    // Retorna true se a tecla NÃO estiver pressionada
+    // Retorna true se a tecla NAO estiver pressionada
     public bool IsKeyReleased(byte key)
     {
         if (key < 16)
@@ -43,7 +43,7 @@ public class Chip8Input : MonoBehaviour
         return true;
     }
 
-    // Retorna o índice da tecla pressionada (0 a F), ou -1 se nenhuma
+    // Retorna o indice da tecla pressionada (0 a F), ou -1 se nenhuma
     public int GetPressedKey()
     {
         for (int i = 0; i < KeyMap.Length; i++)
